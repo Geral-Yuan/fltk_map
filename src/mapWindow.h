@@ -56,6 +56,11 @@ class Cursor : public Fl_Widget {
     int getPixelLength() const {
         return pixel_dis;
     }
+    void reset() {
+        clickCnt = 0;
+        pixel_dis = 0;
+        labelContent = "N/A";
+    }
 };
 
 class MapWindow : public Fl_Window {
@@ -70,9 +75,11 @@ class MapWindow : public Fl_Window {
     Fl_Box *prompt;
     Fl_Input *scaleInput;
     Fl_Button *scaleConfirm;
+    Fl_Button *scaleCancel;
     Fl_Box *scaleLabel;
     friend void calibrate_callback(Fl_Widget *, void *);
     friend void scaleConfirm_callback(Fl_Widget *, void *);
+    friend void scaleCancel_callback(Fl_Widget *, void *);
 
    public:
     MapWindow(int W, int H, const char *L = 0);
@@ -80,7 +87,14 @@ class MapWindow : public Fl_Window {
     void resize(int X, int Y, int W, int H);
     int getPixelWidth() const { return backgroundImage->w(); }
     int getPixelHeight() const { return backgroundImage->h(); }
-    void showScaleConfirm() { scaleConfirm->show(); }
+    void showScaleButton() {
+        scaleConfirm->show();
+        scaleCancel->show();
+    }
+    void hideScaleButton() {
+        scaleConfirm->hide();
+        scaleCancel->hide();
+    }
 };
 
 }  // namespace FLTK_MAP

@@ -18,9 +18,15 @@ void scaleConfirm_callback(Fl_Widget *, void *win) {
     window->cursor->hide();
     window->prompt->hide();
     window->scaleInput->hide();
-    window->scaleConfirm->hide();
+    window->hideScaleButton();
     window->scaleLabel->label(window->scale.c_str());
     window->scaleLabel->show();
+}
+
+void scaleCancel_callback(Fl_Widget *, void *win) {
+    MapWindow *window = (MapWindow *)win;
+    window->cursor->reset();
+    window->hideScaleButton();
 }
 
 void Canvas::draw() {
@@ -65,7 +71,7 @@ int Cursor::handle(int event) {
         case FL_PUSH: {
             if (clickCnt < 2 && Fl::event_button() == FL_LEFT_MOUSE && inMap(event_x, event_y)) {
                 click_X[clickCnt++] = (double)(event_x - x()) / w();
-                ((MapWindow *)window())->showScaleConfirm();
+                if (clickCnt == 2) ((MapWindow *)window())->showScaleButton();
                 return 1;
             }
             break;
@@ -89,10 +95,13 @@ MapWindow::MapWindow(int W, int H, const char *L) : Fl_Window(W, H, L) {
     scaleInput->hide();
     scaleConfirm = new Fl_Button(0, 0, W, H, "Confirm");
     scaleConfirm->hide();
+    scaleCancel = new Fl_Button(0, 0, W, H, "Cancel");
+    scaleCancel->hide();
     scaleLabel = new Fl_Box(0, 0, W, H);
     scaleLabel->hide();
     calibrateScale->callback(calibrate_callback, this);
     scaleConfirm->callback(scaleConfirm_callback, this);
+    scaleCancel->callback(scaleCancel_callback, this);
 }
 
 MapWindow::~MapWindow() {
@@ -105,6 +114,7 @@ MapWindow::~MapWindow() {
     delete prompt;
     delete scaleInput;
     delete scaleConfirm;
+    delete scaleCancel;
     delete scaleLabel;
 }
 
@@ -131,8 +141,10 @@ void MapWindow::resize(int X, int Y, int W, int H) {
     prompt->labelsize(W / 70);
     scaleInput->resize(W / 2 + canvas_W / 16, canvas_Y + white_H / 4, canvas_W / 16, white_H / 4);
     scaleInput->textsize(W / 70);
-    scaleConfirm->resize(W / 2 - canvas_W / 20, canvas_Y + white_H / 2, canvas_W / 10, white_H / 4);
+    scaleConfirm->resize(W / 2 - canvas_W / 10, canvas_Y + white_H / 2, canvas_W / 10, white_H / 4);
     scaleConfirm->labelsize(W / 70);
+    scaleCancel->resize(W / 2, canvas_Y + white_H / 2, canvas_W / 10, white_H / 4);
+    scaleCancel->labelsize(W / 70);
     scaleLabel->resize(canvas_X, canvas_Y + white_H / 4, canvas_W / 5, white_H / 4);
     scaleLabel->labelsize(W / 70);
 }

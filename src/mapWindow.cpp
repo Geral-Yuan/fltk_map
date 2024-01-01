@@ -40,16 +40,16 @@ void Cursor::draw() {
     fl_color(FL_RED);
     fl_line_style(FL_SOLID, line_width);
     for (int i = 0; i < clickCnt; ++i)
-        fl_line(click_X[i], y(), click_X[i], y() + h());
+        fl_line(x() + click_X[i] * w(), y(), x() + click_X[i] * w(), y() + h());
     if (clickCnt != 2)
-        fl_line(cursor_X, y(), cursor_X, y() + h());
+        fl_line(x() + cursor_X * w(), y(), x() + cursor_X * w(), y() + h());
     fl_line_style(0);
     int pixelWidth = ((MapWindow *)window())->getPixelWidth();
     if (clickCnt == 2) {
-        pixel_dis = abs(click_X[1] - click_X[0]) * pixelWidth / w();
+        pixel_dis = fabs(click_X[1] - click_X[0]) * pixelWidth;
         labelContent = std::to_string(pixel_dis) + " pixels";
     } else if (clickCnt == 1) {
-        pixel_dis = abs(cursor_X - click_X[0]) * pixelWidth / w();
+        pixel_dis = fabs(cursor_X - click_X[0]) * pixelWidth;
         labelContent = std::to_string(pixel_dis) + " pixels";
     } else
         labelContent = "N/A";
@@ -59,12 +59,12 @@ void Cursor::draw() {
 int Cursor::handle(int event) {
     int event_x = Fl::event_x();
     int event_y = Fl::event_y();
-    cursor_X = event_x;
+    cursor_X = (double)(event_x - x()) / w();
     window()->redraw();
     switch (event) {
         case FL_PUSH: {
             if (clickCnt < 2 && Fl::event_button() == FL_LEFT_MOUSE && inMap(event_x, event_y)) {
-                click_X[clickCnt++] = event_x;
+                click_X[clickCnt++] = (double)(event_x - x()) / w();
                 ((MapWindow *)window())->showScaleConfirm();
                 return 1;
             }

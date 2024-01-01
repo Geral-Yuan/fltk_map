@@ -9,6 +9,7 @@
 #include <Fl/Fl_Input.H>
 #include <FL/fl_draw.H>
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 
 namespace FLTK_MAP {
@@ -21,8 +22,8 @@ class Canvas : public Fl_Widget {
 
 class Cursor : public Fl_Widget {
     int clickCnt;
-    int click_X[2];
-    int cursor_X;
+    double click_X[2];
+    double cursor_X;
     int pixel_dis;
     std::string labelContent;
     Fl_Box *cursorDisLabel;

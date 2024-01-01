@@ -6,19 +6,24 @@ void calibrate_callback(Fl_Widget *, void *win) {
     MapWindow *window = (MapWindow *)win;
     window->calibrateScale->hide();
     window->cursor->show();
-    window->prompt->show();
-    window->scaleInput->show();
+    window->realPrompt->show();
+    window->realInput->show();
+    window->pixelInputButton->show();
 }
 
 void scaleConfirm_callback(Fl_Widget *, void *win) {
     MapWindow *window = (MapWindow *)win;
     window->pixelLength = window->cursor->getPixelLength();
-    window->realLength = std::stoi(window->scaleInput->value());
+    if (window->pixelLength == -1) window->pixelLength = std::stoi(window->pixelInput->value());
+    window->realLength = std::stoi(window->realInput->value());
     window->scale = "Scale: [ " + std::to_string(window->pixelLength) + " px : " + std::to_string(window->realLength) + " m ]";
     window->cursor->hide();
-    window->prompt->hide();
-    window->scaleInput->hide();
+    window->realPrompt->hide();
+    window->realInput->hide();
+    window->pixelPrompt->hide();
+    window->pixelInput->hide();
     window->hideScaleButton();
+    window->back2cursor->hide();
     window->scaleLabel->label(window->scale.c_str());
     window->scaleLabel->show();
 }
@@ -27,6 +32,28 @@ void scaleCancel_callback(Fl_Widget *, void *win) {
     MapWindow *window = (MapWindow *)win;
     window->cursor->reset();
     window->hideScaleButton();
+    window->showPixelInput();
+}
+
+void pixelInput_callback(Fl_Widget *, void *win) {
+    MapWindow *window = (MapWindow *)win;
+    window->hidePixelInput();
+    window->cursor->reset();
+    window->cursor->hide();
+    window->scaleConfirm->show();
+    window->back2cursor->show();
+    window->pixelPrompt->show();
+    window->pixelInput->show();
+}
+
+void back2cursor_callback(Fl_Widget *, void *win) {
+    MapWindow *window = (MapWindow *)win;
+    window->scaleConfirm->hide();
+    window->back2cursor->hide();
+    window->showPixelInput();
+    window->cursor->show();
+    window->pixelPrompt->hide();
+    window->pixelInput->hide();
 }
 
 void Canvas::draw() {
@@ -71,7 +98,10 @@ int Cursor::handle(int event) {
         case FL_PUSH: {
             if (clickCnt < 2 && Fl::event_button() == FL_LEFT_MOUSE && inMap(event_x, event_y)) {
                 click_X[clickCnt++] = (double)(event_x - x()) / w();
-                if (clickCnt == 2) ((MapWindow *)window())->showScaleButton();
+                if (clickCnt == 2) {
+                    ((MapWindow *)window())->hidePixelInput();
+                    ((MapWindow *)window())->showScaleButton();
+                }
                 return 1;
             }
             break;
@@ -88,20 +118,31 @@ MapWindow::MapWindow(int W, int H, const char *L) : Fl_Window(W, H, L) {
     calibrateScale = new Fl_Button(0, 0, W, H, "calibrate scale");
     cursor = new Cursor(0, 0, W, H);
     cursor->hide();
-    prompt = new Fl_Box(0, 0, W, H, "real distance in meter:");
-    prompt->hide();
-    scaleInput = new Fl_Input(0, 0, W, H);
-    scaleInput->value("0");
-    scaleInput->hide();
+    realPrompt = new Fl_Box(0, 0, W, H, "real distance in meter:");
+    realPrompt->hide();
+    realInput = new Fl_Input(0, 0, W, H);
+    realInput->value("0");
+    realInput->hide();
+    pixelPrompt = new Fl_Box(0, 0, W, H, "pixel distance in px:");
+    pixelPrompt->hide();
+    pixelInput = new Fl_Input(0, 0, W, H);
+    pixelInput->value("0");
+    pixelInput->hide();
     scaleConfirm = new Fl_Button(0, 0, W, H, "Confirm");
     scaleConfirm->hide();
     scaleCancel = new Fl_Button(0, 0, W, H, "Cancel");
     scaleCancel->hide();
     scaleLabel = new Fl_Box(0, 0, W, H);
     scaleLabel->hide();
+    pixelInputButton = new Fl_Button(0, 0, W, H, "input pixel distance manually");
+    pixelInputButton->hide();
+    back2cursor = new Fl_Button(0, 0, W, H, "Back");
+    back2cursor->hide();
     calibrateScale->callback(calibrate_callback, this);
     scaleConfirm->callback(scaleConfirm_callback, this);
     scaleCancel->callback(scaleCancel_callback, this);
+    pixelInputButton->callback(pixelInput_callback, this);
+    back2cursor->callback(back2cursor_callback, this);
 }
 
 MapWindow::~MapWindow() {
@@ -111,11 +152,15 @@ MapWindow::~MapWindow() {
     delete background;
     delete calibrateScale;
     delete cursor;
-    delete prompt;
-    delete scaleInput;
+    delete realPrompt;
+    delete realInput;
+    delete pixelPrompt;
+    delete pixelInput;
     delete scaleConfirm;
     delete scaleCancel;
     delete scaleLabel;
+    delete pixelInputButton;
+    delete back2cursor;
 }
 
 void MapWindow::resize(int X, int Y, int W, int H) {
@@ -137,16 +182,24 @@ void MapWindow::resize(int X, int Y, int W, int H) {
     calibrateScale->resize(W / 2 - canvas_W / 10, canvas_Y + white_H / 3, canvas_W / 5, white_H / 3);
     calibrateScale->labelsize(W / 50);
     cursor->resize(canvas_X, canvas_Y + white_H, background_W, background_H);
-    prompt->resize(W / 2 - canvas_W / 8, canvas_Y + white_H / 4, canvas_W * 3 / 16, white_H / 4);
-    prompt->labelsize(W / 70);
-    scaleInput->resize(W / 2 + canvas_W / 16, canvas_Y + white_H / 4, canvas_W / 16, white_H / 4);
-    scaleInput->textsize(W / 70);
+    realPrompt->resize(W / 2 - canvas_W / 8, canvas_Y + white_H / 4, canvas_W * 3 / 16, white_H / 4);
+    realPrompt->labelsize(W / 70);
+    realInput->resize(W / 2 + canvas_W / 16, canvas_Y + white_H / 4, canvas_W / 16, white_H / 4);
+    realInput->textsize(W / 70);
+    pixelPrompt->resize(W / 2 - canvas_W / 8, canvas_Y, canvas_W * 3 / 16, white_H / 4);
+    pixelPrompt->labelsize(W / 70);
+    pixelInput->resize(W / 2 + canvas_W / 16, canvas_Y, canvas_W / 16, white_H / 4);
+    pixelInput->textsize(W / 70);
     scaleConfirm->resize(W / 2 - canvas_W / 10, canvas_Y + white_H / 2, canvas_W / 10, white_H / 4);
     scaleConfirm->labelsize(W / 70);
     scaleCancel->resize(W / 2, canvas_Y + white_H / 2, canvas_W / 10, white_H / 4);
     scaleCancel->labelsize(W / 70);
     scaleLabel->resize(canvas_X, canvas_Y + white_H / 4, canvas_W / 5, white_H / 4);
     scaleLabel->labelsize(W / 70);
+    pixelInputButton->resize(W / 2 - canvas_W / 8, canvas_Y + white_H / 2, canvas_W / 4, white_H / 4);
+    pixelInputButton->labelsize(W / 70);
+    back2cursor->resize(W / 2, canvas_Y + white_H / 2, canvas_W / 10, white_H / 4);
+    back2cursor->labelsize(W / 70);
 }
 
 }  // namespace FLTK_MAP

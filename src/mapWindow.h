@@ -29,7 +29,7 @@ class Cursor : public Fl_Widget {
     Fl_Box *cursorDisLabel;
 
    public:
-    Cursor(int X, int Y, int W, int H) : Fl_Widget(X, Y, W, H), clickCnt(0) {
+    Cursor(int X, int Y, int W, int H) : Fl_Widget(X, Y, W, H), clickCnt(0), pixel_dis(-1), labelContent("N/A") {
         cursorDisLabel = new Fl_Box(0, 0, 0, 0);
     }
     ~Cursor() {
@@ -58,7 +58,7 @@ class Cursor : public Fl_Widget {
     }
     void reset() {
         clickCnt = 0;
-        pixel_dis = 0;
+        pixel_dis = -1;
         labelContent = "N/A";
     }
 };
@@ -72,14 +72,20 @@ class MapWindow : public Fl_Window {
     Fl_Box *background;
     Fl_Button *calibrateScale;
     Cursor *cursor;
-    Fl_Box *prompt;
-    Fl_Input *scaleInput;
+    Fl_Box *realPrompt;
+    Fl_Input *realInput;
+    Fl_Box *pixelPrompt;
+    Fl_Input *pixelInput;
     Fl_Button *scaleConfirm;
     Fl_Button *scaleCancel;
     Fl_Box *scaleLabel;
+    Fl_Button *pixelInputButton;
+    Fl_Button *back2cursor;
     friend void calibrate_callback(Fl_Widget *, void *);
     friend void scaleConfirm_callback(Fl_Widget *, void *);
     friend void scaleCancel_callback(Fl_Widget *, void *);
+    friend void pixelInput_callback(Fl_Widget *, void *);
+    friend void back2cursor_callback(Fl_Widget *, void *);
 
    public:
     MapWindow(int W, int H, const char *L = 0);
@@ -94,6 +100,12 @@ class MapWindow : public Fl_Window {
     void hideScaleButton() {
         scaleConfirm->hide();
         scaleCancel->hide();
+    }
+    void showPixelInput() {
+        pixelInputButton->show();
+    }
+    void hidePixelInput() {
+        pixelInputButton->hide();
     }
 };
 

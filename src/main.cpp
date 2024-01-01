@@ -1,4 +1,4 @@
-#include "mapWindow.hpp"
+#include "mapWindow.h"
 
 using namespace FLTK_MAP;
 

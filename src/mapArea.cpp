@@ -6,6 +6,26 @@ int crossProduct(const Vec &v1, const Vec &v2) {
     return v1.x * v2.y - v2.x * v1.y;
 }
 
+std::string toScientificString(unsigned long long value) {
+    if (value < 10) return std::to_string(value) + ".00000";
+    unsigned long long x = 1;
+    int digitCnt = 0;
+    std::string s;
+    while (value >= x) {
+        ++digitCnt;
+        x *= 10;
+    }
+    x /= 10;
+    s = std::to_string(value / x) + ".";
+    if (digitCnt <= 6) {
+        s += std::to_string(value % x) + std::string(6 - digitCnt, '0');
+    } else {
+        s += std::to_string(((value % x) / (x / (int)1e6) + 5) / 10);
+    }
+    s += "*10^" + std::to_string(digitCnt - 1);
+    return s;
+}
+
 void MapArea::draw() {
     int sz = points.size();
     if (sz) {
@@ -65,14 +85,14 @@ void MapArea::computeArea() {
         int area = 0;
         for (int i = 0; i < sz - 1; ++i)
             area += crossProduct(points[i], points[i + 1]);
-        if (done)
+        if (done || !mouseInside)
             area += crossProduct(points[sz - 1], points[0]);
         else
             area += crossProduct(points[sz - 1], currentPoint) + crossProduct(currentPoint, points[0]);
         pixelArea = abs(area) / 2;
         realArea = pixelArea * realLength * realLength / pixelLength / pixelLength;
     }
-    areaString = "pixel area: " + std::to_string(pixelArea) + " px²\nreal area: " + std::to_string(realArea)+" m²";
+    areaString = "pixel area: " + toScientificString(pixelArea) + " px²\nreal area: " + toScientificString(realArea) + " m²";
 }
 
 }  // namespace FLTK_MAP

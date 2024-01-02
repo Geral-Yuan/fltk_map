@@ -11,13 +11,13 @@ void MapArea::draw() {
     if (sz) {
         int X = x(), Y = y(), W = w(), H = h();
         fl_color(FL_CYAN);
-        fl_line_style(FL_SOLID, 1 + H / 500);
-        fl_begin_polygon();
+        fl_line_style(FL_SOLID, 1 + H / 300);
+        fl_begin_loop();
         for (int i = 0; i < sz; ++i)
             fl_vertex(X + points[i].x * W / imageWidth, Y + points[i].y * H / imageHeight);
-        if (!done && mouseInMap)
+        if (!done && mouseInside)
             fl_vertex(X + currentPoint.x * W / imageWidth, Y + currentPoint.y * H / imageHeight);
-        fl_end_polygon();
+        fl_end_loop();
     }
     computeArea();
     areaLabel->label(areaString.c_str());
@@ -26,19 +26,29 @@ void MapArea::draw() {
 int MapArea::handle(int event) {
     int event_x = Fl::event_x();
     int event_y = Fl::event_y();
-    if (done || !inMap(event_x, event_y)) {
-        mouseInMap = false;
-        window()->redraw();
-        return 0;
-    }
-    mouseInMap = true;
+    if (done) return 0;
     int X = x(), Y = y(), W = w(), H = h();
-    currentPoint = Point((event_x - X) * imageWidth / W, (event_y - Y) * imageHeight / H);
-    window()->redraw();
     switch (event) {
+        case FL_ENTER: {
+            mouseInside = true;
+            return 1;
+        }
+        case FL_LEAVE: {
+            mouseInside = false;
+            window()->redraw();
+            return 1;
+        }
+        case FL_MOVE: {
+            if (mouseInside) {
+                currentPoint = Point((event_x - X) * imageWidth / W, (event_y - Y) * imageHeight / H);
+                window()->redraw();
+                return 1;
+            }
+            break;
+        }
         case FL_PUSH: {
             if (Fl::event_button() == FL_LEFT_MOUSE) {
-                points.push_back(currentPoint);
+                points.push_back(Point((event_x - X) * imageWidth / W, (event_y - Y) * imageHeight / H));
                 return 1;
             }
             break;

@@ -62,9 +62,10 @@ void back2cursor_callback(Fl_Widget *, void *win) {
 
 void areaConfirm_callback(Fl_Widget *, void *win) {
     MapWindow *window = (MapWindow *)win;
-    window->mapArea->confirm();
-    window->areaComfirm->hide();
-    window->pointUndo->hide();
+    if (window->mapArea->confirm()) {
+        window->areaComfirm->hide();
+        window->pointUndo->hide();
+    }
 }
 
 void pointUndo_callback(Fl_Widget *, void *win) {
@@ -91,7 +92,7 @@ void Cursor::draw() {
     fl_line_style(FL_SOLID, line_width);
     for (int i = 0; i < clickCnt; ++i)
         fl_line(x() + click_X[i] * w() / imageWidth, y(), x() + click_X[i] * w() / imageWidth, y() + h());
-    if (clickCnt != 2)
+    if (mouseInside && clickCnt != 2)
         fl_line(x() + cursor_X * w() / imageWidth, y(), x() + cursor_X * w() / imageWidth, y() + h());
     fl_line_style(0);
     if (clickCnt == 2) {
@@ -108,12 +109,27 @@ void Cursor::draw() {
 int Cursor::handle(int event) {
     int event_x = Fl::event_x();
     int event_y = Fl::event_y();
-    cursor_X = (event_x - x()) * imageWidth / w();
-    if (inMap(event_x, event_y)) window()->redraw();
     switch (event) {
+        case FL_ENTER: {
+            mouseInside = true;
+            return 1;
+        }
+        case FL_LEAVE: {
+            mouseInside = false;
+            window()->redraw();
+            return 1;
+        }
+        case FL_MOVE: {
+            if (mouseInside) {
+                cursor_X = (event_x - x()) * imageWidth / w();
+                window()->redraw();
+                return 1;
+            }
+            break;
+        }
         case FL_PUSH: {
             if (clickCnt < 2 && Fl::event_button() == FL_LEFT_MOUSE && inMap(event_x, event_y)) {
-                click_X[clickCnt++] = cursor_X;
+                click_X[clickCnt++] = (event_x - x()) * imageWidth / w();
                 if (clickCnt == 2) {
                     ((MapWindow *)window())->hidePixelInput();
                     ((MapWindow *)window())->showScaleButton();

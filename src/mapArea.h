@@ -38,7 +38,7 @@ class MapArea : public Fl_Widget {
     unsigned long long pixelArea;
     unsigned long long realArea;
     std::string areaString;
-    bool mouseInMap;
+    bool mouseInside;
     bool done;
 
    public:
@@ -67,10 +67,14 @@ class MapArea : public Fl_Widget {
         areaLabel->labelsize(W / 70);
     }
     void undo() {
-        points.pop_back();
+        if (!points.empty()) points.pop_back();
     }
-    void confirm() {
-        done = true;
+    bool confirm() {
+        if (points.size()>=3){
+            done = true;
+            return true;
+        }
+        return false;
     }
     void setScale(int pxLen, int realLen) {
         pixelLength = pxLen;

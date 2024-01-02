@@ -27,12 +27,13 @@ class Cursor : public Fl_Widget {
     int clickCnt;
     int click_X[2];
     int cursor_X;
+    bool mouseInside;
     int pixel_dis;
     std::string labelContent;
     Fl_Box *cursorDisLabel;
 
    public:
-    Cursor(int X, int Y, int W, int H, int imgW, int imgH) : Fl_Widget(X, Y, W, H), imageWidth(imgW), imageHeight(imgH), clickCnt(0), pixel_dis(-1), labelContent("N/A") {
+    Cursor(int X, int Y, int W, int H, int imgW, int imgH) : Fl_Widget(X, Y, W, H), imageWidth(imgW), imageHeight(imgH), clickCnt(0), mouseInside(false), pixel_dis(-1), labelContent("N/A") {
         cursorDisLabel = new Fl_Box(0, 0, 0, 0);
     }
     ~Cursor() {

@@ -142,9 +142,9 @@ int Cursor::handle(int event) {
     return 0;
 }
 
-MapWindow::MapWindow(int W, int H, const char *L) : Fl_Window(W, H, L) {
+MapWindow::MapWindow(int W, int H, const char *L, const char *testcase) : Fl_Window(W, H, L) {
     canvas = new Canvas(0, 0, W, H);
-    backgroundImage = new Fl_PNG_Image("./assets/testcase1.png");
+    backgroundImage = new Fl_PNG_Image(("./assets/"+std::string(testcase)+".png").c_str());
     background = new Fl_Box(0, 0, W, H);
     background->image(backgroundImage->copy(W, H));
     calibrateScale = new Fl_Button(0, 0, W, H, "calibrate scale");

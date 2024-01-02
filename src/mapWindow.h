@@ -97,7 +97,7 @@ class MapWindow : public Fl_Window {
     friend void pointUndo_callback(Fl_Widget *, void *);
 
    public:
-    MapWindow(int W, int H, const char *L = 0);
+    MapWindow(int W, int H, const char *L = 0, const char *testcase = "testcase1");
     ~MapWindow();
     void resize(int X, int Y, int W, int H);
     void showScaleButton() {

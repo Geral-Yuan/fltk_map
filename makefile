@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -Wall -Wextra -std=c++11
 FLTKFLAGS = -lfltk -lfltk_images
-SRC = ./src/main.cpp ./src/mapWindow.cpp
+SRC = ./src/main.cpp ./src/mapWindow.cpp ./src/mapArea.cpp
 
 map:
 	$(CXX) $(SRC) -o main $(CXXFLAGS) $(FLTKFLAGS)

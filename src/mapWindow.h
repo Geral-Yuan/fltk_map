@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include "mapArea.h"
 
 namespace FLTK_MAP {
 
@@ -21,15 +22,17 @@ class Canvas : public Fl_Widget {
 };
 
 class Cursor : public Fl_Widget {
+    int imageWidth;
+    int imageHeight;
     int clickCnt;
-    double click_X[2];
-    double cursor_X;
+    int click_X[2];
+    int cursor_X;
     int pixel_dis;
     std::string labelContent;
     Fl_Box *cursorDisLabel;
 
    public:
-    Cursor(int X, int Y, int W, int H) : Fl_Widget(X, Y, W, H), clickCnt(0), pixel_dis(-1), labelContent("N/A") {
+    Cursor(int X, int Y, int W, int H, int imgW, int imgH) : Fl_Widget(X, Y, W, H), imageWidth(imgW), imageHeight(imgH), clickCnt(0), pixel_dis(-1), labelContent("N/A") {
         cursorDisLabel = new Fl_Box(0, 0, 0, 0);
     }
     ~Cursor() {
@@ -81,18 +84,21 @@ class MapWindow : public Fl_Window {
     Fl_Box *scaleLabel;
     Fl_Button *pixelInputButton;
     Fl_Button *back2cursor;
+    MapArea *mapArea;
+    Fl_Button *areaComfirm;
+    Fl_Button *pointUndo;
     friend void calibrate_callback(Fl_Widget *, void *);
     friend void scaleConfirm_callback(Fl_Widget *, void *);
     friend void scaleCancel_callback(Fl_Widget *, void *);
     friend void pixelInput_callback(Fl_Widget *, void *);
     friend void back2cursor_callback(Fl_Widget *, void *);
+    friend void areaConfirm_callback(Fl_Widget *, void *);
+    friend void pointUndo_callback(Fl_Widget *, void *);
 
    public:
     MapWindow(int W, int H, const char *L = 0);
     ~MapWindow();
     void resize(int X, int Y, int W, int H);
-    int getPixelWidth() const { return backgroundImage->w(); }
-    int getPixelHeight() const { return backgroundImage->h(); }
     void showScaleButton() {
         scaleConfirm->show();
         scaleCancel->show();

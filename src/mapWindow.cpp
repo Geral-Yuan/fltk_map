@@ -16,6 +16,7 @@ void scaleConfirm_callback(Fl_Widget *, void *win) {
     window->pixelLength = window->cursor->getPixelLength();
     if (window->pixelLength == -1) window->pixelLength = std::stoi(window->pixelInput->value());
     window->realLength = std::stoi(window->realInput->value());
+    window->mapArea->setScale(window->pixelLength, window->realLength);
     window->scale = "Scale: [ " + std::to_string(window->pixelLength) + " px : " + std::to_string(window->realLength) + " m ]";
     window->cursor->hide();
     window->realPrompt->hide();
@@ -26,6 +27,9 @@ void scaleConfirm_callback(Fl_Widget *, void *win) {
     window->back2cursor->hide();
     window->scaleLabel->label(window->scale.c_str());
     window->scaleLabel->show();
+    window->mapArea->show();
+    window->areaComfirm->show();
+    window->pointUndo->show();
 }
 
 void scaleCancel_callback(Fl_Widget *, void *win) {
@@ -56,6 +60,19 @@ void back2cursor_callback(Fl_Widget *, void *win) {
     window->pixelInput->hide();
 }
 
+void areaConfirm_callback(Fl_Widget *, void *win) {
+    MapWindow *window = (MapWindow *)win;
+    window->mapArea->confirm();
+    window->areaComfirm->hide();
+    window->pointUndo->hide();
+}
+
+void pointUndo_callback(Fl_Widget *, void *win) {
+    MapWindow *window = (MapWindow *)win;
+    window->mapArea->undo();
+    window->redraw();
+}
+
 void Canvas::draw() {
     int X = x(), Y = y(), W = w(), H = h();
     int line_width = 1 + H / 500;
@@ -73,16 +90,15 @@ void Cursor::draw() {
     fl_color(FL_RED);
     fl_line_style(FL_SOLID, line_width);
     for (int i = 0; i < clickCnt; ++i)
-        fl_line(x() + click_X[i] * w(), y(), x() + click_X[i] * w(), y() + h());
+        fl_line(x() + click_X[i] * w() / imageWidth, y(), x() + click_X[i] * w() / imageWidth, y() + h());
     if (clickCnt != 2)
-        fl_line(x() + cursor_X * w(), y(), x() + cursor_X * w(), y() + h());
+        fl_line(x() + cursor_X * w() / imageWidth, y(), x() + cursor_X * w() / imageWidth, y() + h());
     fl_line_style(0);
-    int pixelWidth = ((MapWindow *)window())->getPixelWidth();
     if (clickCnt == 2) {
-        pixel_dis = fabs(click_X[1] - click_X[0]) * pixelWidth;
+        pixel_dis = abs(click_X[1] - click_X[0]);
         labelContent = std::to_string(pixel_dis) + " pixels";
     } else if (clickCnt == 1) {
-        pixel_dis = fabs(cursor_X - click_X[0]) * pixelWidth;
+        pixel_dis = abs(cursor_X - click_X[0]);
         labelContent = std::to_string(pixel_dis) + " pixels";
     } else
         labelContent = "N/A";
@@ -92,12 +108,12 @@ void Cursor::draw() {
 int Cursor::handle(int event) {
     int event_x = Fl::event_x();
     int event_y = Fl::event_y();
-    cursor_X = (double)(event_x - x()) / w();
-    window()->redraw();
+    cursor_X = (event_x - x()) * imageWidth / w();
+    if (inMap(event_x, event_y)) window()->redraw();
     switch (event) {
         case FL_PUSH: {
             if (clickCnt < 2 && Fl::event_button() == FL_LEFT_MOUSE && inMap(event_x, event_y)) {
-                click_X[clickCnt++] = (double)(event_x - x()) / w();
+                click_X[clickCnt++] = cursor_X;
                 if (clickCnt == 2) {
                     ((MapWindow *)window())->hidePixelInput();
                     ((MapWindow *)window())->showScaleButton();
@@ -116,7 +132,7 @@ MapWindow::MapWindow(int W, int H, const char *L) : Fl_Window(W, H, L) {
     background = new Fl_Box(0, 0, W, H);
     background->image(backgroundImage->copy(W, H));
     calibrateScale = new Fl_Button(0, 0, W, H, "calibrate scale");
-    cursor = new Cursor(0, 0, W, H);
+    cursor = new Cursor(0, 0, W, H, backgroundImage->w(), backgroundImage->h());
     cursor->hide();
     realPrompt = new Fl_Box(0, 0, W, H, "real distance in meter:");
     realPrompt->hide();
@@ -138,11 +154,19 @@ MapWindow::MapWindow(int W, int H, const char *L) : Fl_Window(W, H, L) {
     pixelInputButton->hide();
     back2cursor = new Fl_Button(0, 0, W, H, "Back");
     back2cursor->hide();
+    mapArea = new MapArea(0, 0, W, H, backgroundImage->w(), backgroundImage->h());
+    mapArea->hide();
+    areaComfirm = new Fl_Button(0, 0, W, H, "Confirm");
+    areaComfirm->hide();
+    pointUndo = new Fl_Button(0, 0, W, H, "Undo");
+    pointUndo->hide();
     calibrateScale->callback(calibrate_callback, this);
     scaleConfirm->callback(scaleConfirm_callback, this);
     scaleCancel->callback(scaleCancel_callback, this);
     pixelInputButton->callback(pixelInput_callback, this);
     back2cursor->callback(back2cursor_callback, this);
+    areaComfirm->callback(areaConfirm_callback, this);
+    pointUndo->callback(pointUndo_callback, this);
 }
 
 MapWindow::~MapWindow() {
@@ -161,6 +185,9 @@ MapWindow::~MapWindow() {
     delete scaleLabel;
     delete pixelInputButton;
     delete back2cursor;
+    delete mapArea;
+    delete areaComfirm;
+    delete pointUndo;
 }
 
 void MapWindow::resize(int X, int Y, int W, int H) {
@@ -180,26 +207,31 @@ void MapWindow::resize(int X, int Y, int W, int H) {
     background->resize(canvas_X, canvas_Y + white_H, background_W, background_H);
     background->image(backgroundImage->copy(background_W, background_H));
     calibrateScale->resize(W / 2 - canvas_W / 10, canvas_Y + white_H / 3, canvas_W / 5, white_H / 3);
-    calibrateScale->labelsize(W / 50);
+    calibrateScale->labelsize(canvas_W / 50);
     cursor->resize(canvas_X, canvas_Y + white_H, background_W, background_H);
     realPrompt->resize(W / 2 - canvas_W / 8, canvas_Y + white_H / 4, canvas_W * 3 / 16, white_H / 4);
-    realPrompt->labelsize(W / 70);
+    realPrompt->labelsize(canvas_W / 70);
     realInput->resize(W / 2 + canvas_W / 16, canvas_Y + white_H / 4, canvas_W / 16, white_H / 4);
-    realInput->textsize(W / 70);
+    realInput->textsize(canvas_W / 70);
     pixelPrompt->resize(W / 2 - canvas_W / 8, canvas_Y, canvas_W * 3 / 16, white_H / 4);
-    pixelPrompt->labelsize(W / 70);
+    pixelPrompt->labelsize(canvas_W / 70);
     pixelInput->resize(W / 2 + canvas_W / 16, canvas_Y, canvas_W / 16, white_H / 4);
-    pixelInput->textsize(W / 70);
-    scaleConfirm->resize(W / 2 - canvas_W / 10, canvas_Y + white_H / 2, canvas_W / 10, white_H / 4);
-    scaleConfirm->labelsize(W / 70);
-    scaleCancel->resize(W / 2, canvas_Y + white_H / 2, canvas_W / 10, white_H / 4);
-    scaleCancel->labelsize(W / 70);
+    pixelInput->textsize(canvas_W / 70);
+    scaleConfirm->resize(W / 2, canvas_Y + white_H / 2, canvas_W / 10, white_H / 4);
+    scaleConfirm->labelsize(canvas_W / 70);
+    scaleCancel->resize(W / 2 - canvas_W / 10, canvas_Y + white_H / 2, canvas_W / 10, white_H / 4);
+    scaleCancel->labelsize(canvas_W / 70);
     scaleLabel->resize(canvas_X, canvas_Y + white_H / 4, canvas_W / 5, white_H / 4);
-    scaleLabel->labelsize(W / 70);
+    scaleLabel->labelsize(canvas_W / 70);
     pixelInputButton->resize(W / 2 - canvas_W / 8, canvas_Y + white_H / 2, canvas_W / 4, white_H / 4);
-    pixelInputButton->labelsize(W / 70);
-    back2cursor->resize(W / 2, canvas_Y + white_H / 2, canvas_W / 10, white_H / 4);
-    back2cursor->labelsize(W / 70);
+    pixelInputButton->labelsize(canvas_W / 70);
+    back2cursor->resize(W / 2 - canvas_W / 10, canvas_Y + white_H / 2, canvas_W / 10, white_H / 4);
+    back2cursor->labelsize(canvas_W / 70);
+    mapArea->resize(canvas_X, canvas_Y + white_H, background_W, background_H);
+    areaComfirm->resize(W / 2, canvas_Y + white_H / 2, canvas_W / 10, white_H / 4);
+    areaComfirm->labelsize(canvas_W / 70);
+    pointUndo->resize(W / 2 - canvas_W / 10, canvas_Y + white_H / 2, canvas_W / 10, white_H / 4);
+    pointUndo->labelsize(canvas_W / 70);
 }
 
 }  // namespace FLTK_MAP

@@ -107,6 +107,21 @@ int MapArea::handle(int event) {
     return 0;
 }
 
+int MapArea::confirm() {
+    int sz = points.size();
+    if (sz >= 3) {
+        for (int i = 0; i < sz - 2; ++i)
+            for (int j = i + 2; j < sz - (i == 0); ++j) {
+                long long prod1 = (long long)crossProduct(points[i + 1] - points[i], points[j] - points[i]) * crossProduct(points[i + 1] - points[i], points[(j + 1) % sz] - points[i]);
+                long long prod2 = (long long)crossProduct(points[(j + 1) % sz] - points[j], points[i] - points[j]) * crossProduct(points[(j + 1) % sz] - points[j], points[i + 1] - points[j]);
+                if (prod1 < 0 && prod2 < 0) return 2;
+            }
+        done = true;
+        return 0;
+    }
+    return 1;
+}
+
 void MapArea::computeArea() {
     int sz = points.size();
     if (sz < 2)

@@ -23,6 +23,21 @@ void badInputTimer_callback(void *win) {
     }
 }
 
+void invalidPolygonTimer_callback(void *win) {
+    MapWindow *window = (MapWindow *)win;
+    window->invalidPolygon = !window->invalidPolygon;
+    if (window->invalidPolygon) {
+        Fl::repeat_timeout(1.0, invalidPolygonTimer_callback, win);
+        window->areaComfirm->hide();
+        window->pointUndo->hide();
+        window->invalidPolygonPrompt->show();
+    } else {
+        window->invalidPolygonPrompt->hide();
+        window->areaComfirm->show();
+        window->pointUndo->show();
+    }
+}
+
 void calibrate_callback(Fl_Widget *, void *win) {
     MapWindow *window = (MapWindow *)win;
     window->calibrateScale->hide();
@@ -96,10 +111,14 @@ void back2cursor_callback(Fl_Widget *, void *win) {
 
 void areaConfirm_callback(Fl_Widget *, void *win) {
     MapWindow *window = (MapWindow *)win;
-    if (window->mapArea->confirm()) {
+    int polygonState = window->mapArea->confirm();
+    if (polygonState == 0) {
         window->areaComfirm->hide();
         window->pointUndo->hide();
         window->areaCancel->show();
+    } else {
+        window->invalidPolygonPrompt->label(polygonState == 1 ? "Too less points! Please try again!" : "Edges intersect! Please try again!");
+        invalidPolygonTimer_callback(win);
     }
 }
 
@@ -185,7 +204,7 @@ int Cursor::handle(int event) {
     return 0;
 }
 
-MapWindow::MapWindow(int W, int H, const char *L, const char *testcase, const char *suffix) : Fl_Window(W, H, L), badInput(false), cursorMode(true) {
+MapWindow::MapWindow(int W, int H, const char *L, const char *testcase, const char *suffix) : Fl_Window(W, H, L), badInput(false), invalidPolygon(false), cursorMode(true) {
     canvas = new Canvas(0, 0, W, H);
     if (std::string(suffix) == "png")
         backgroundImage = new Fl_PNG_Image(("./assets/" + std::string(testcase) + "." + std::string(suffix)).c_str());
@@ -227,6 +246,9 @@ MapWindow::MapWindow(int W, int H, const char *L, const char *testcase, const ch
     badInputPrompt = new Fl_Box(0, 0, W, H, "Bad input! Please try again!");
     badInputPrompt->labelcolor(FL_RED);
     badInputPrompt->hide();
+    invalidPolygonPrompt = new Fl_Box(0, 0, W, H);
+    invalidPolygonPrompt->labelcolor(FL_RED);
+    invalidPolygonPrompt->hide();
     calibrateScale->callback(calibrate_callback, this);
     scaleConfirm->callback(scaleConfirm_callback, this);
     scaleCancel->callback(scaleCancel_callback, this);
@@ -306,6 +328,8 @@ void MapWindow::resize(int X, int Y, int W, int H) {
     areaCancel->labelsize(canvas_W / 70);
     badInputPrompt->resize(W / 2 - canvas_W / 10, canvas_Y + white_H / 2, canvas_W / 5, white_H / 4);
     badInputPrompt->labelsize(canvas_W / 70);
+    invalidPolygonPrompt->resize(W / 2 - canvas_W / 10, canvas_Y + white_H / 2, canvas_W / 5, white_H / 4);
+    invalidPolygonPrompt->labelsize(canvas_W / 70);
 }
 
 }  // namespace FLTK_MAP

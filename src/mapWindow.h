@@ -91,7 +91,9 @@ class MapWindow : public Fl_Window {
     Fl_Button *pointUndo;
     Fl_Button *areaCancel;
     Fl_Box *badInputPrompt;
+    Fl_Box *invalidPolygonPrompt;
     bool badInput;
+    bool invalidPolygon;
     bool cursorMode;
     friend void calibrate_callback(Fl_Widget *, void *);
     friend void scaleConfirm_callback(Fl_Widget *, void *);
@@ -102,6 +104,7 @@ class MapWindow : public Fl_Window {
     friend void pointUndo_callback(Fl_Widget *, void *);
     friend void areaCancel_callback(Fl_Widget *, void *);
     friend void badInputTimer_callback(void *);
+    friend void invalidPolygonTimer_callback(void *);
 
    public:
     MapWindow(int W, int H, const char *L = 0, const char *testcase = "testcase1", const char *suffix = "png");

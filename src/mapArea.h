@@ -23,6 +23,9 @@ struct Vec {
         y = rhs.y;
         return *this;
     }
+    Vec operator-(const Vec &rhs) {
+        return Vec(x - rhs.x, y - rhs.y);
+    }
 };
 
 int crossProduct(const Vec &v1, const Vec &v2);
@@ -77,13 +80,7 @@ class MapArea : public Fl_Widget {
         pixelArea = realArea = 0;
         done = false;
     }
-    bool confirm() {
-        if (points.size() >= 3) {
-            done = true;
-            return true;
-        }
-        return false;
-    }
+    int confirm();
     void setScale(int pxLen, int realLen) {
         pixelLength = pxLen;
         realLength = realLen;

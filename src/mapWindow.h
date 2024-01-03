@@ -34,7 +34,7 @@ class Cursor : public Fl_Widget {
     Fl_Box *cursorDisLabel;
 
    public:
-    Cursor(int X, int Y, int W, int H, int imgW, int imgH) : Fl_Widget(X, Y, W, H), imageWidth(imgW), imageHeight(imgH), clickCnt(0), mouseInside(false), pixel_dis(-1), labelContent("N/A") {
+    Cursor(int X, int Y, int W, int H, int imgW, int imgH) : Fl_Widget(X, Y, W, H), imageWidth(imgW), imageHeight(imgH), clickCnt(0), mouseInside(false), pixel_dis(0), labelContent("N/A") {
         cursorDisLabel = new Fl_Box(0, 0, 0, 0);
     }
     ~Cursor() {
@@ -63,7 +63,7 @@ class Cursor : public Fl_Widget {
     }
     void reset() {
         clickCnt = 0;
-        pixel_dis = -1;
+        pixel_dis = 0;
         labelContent = "N/A";
     }
 };
@@ -90,6 +90,9 @@ class MapWindow : public Fl_Window {
     Fl_Button *areaComfirm;
     Fl_Button *pointUndo;
     Fl_Button *areaCancel;
+    Fl_Box *badInputPrompt;
+    bool badInput;
+    bool cursorMode;
     friend void calibrate_callback(Fl_Widget *, void *);
     friend void scaleConfirm_callback(Fl_Widget *, void *);
     friend void scaleCancel_callback(Fl_Widget *, void *);
@@ -98,6 +101,7 @@ class MapWindow : public Fl_Window {
     friend void areaConfirm_callback(Fl_Widget *, void *);
     friend void pointUndo_callback(Fl_Widget *, void *);
     friend void areaCancel_callback(Fl_Widget *, void *);
+    friend void badInputTimer_callback(void *);
 
    public:
     MapWindow(int W, int H, const char *L = 0, const char *testcase = "testcase1", const char *suffix = "png");

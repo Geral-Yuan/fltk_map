@@ -2,6 +2,27 @@
 
 namespace FLTK_MAP {
 
+void badInputTimer_callback(void *win) {
+    MapWindow *window = (MapWindow *)win;
+    window->badInput = !window->badInput;
+    if (window->badInput) {
+        Fl::repeat_timeout(1.0, badInputTimer_callback, win);
+        window->scaleConfirm->hide();
+        if (window->cursorMode)
+            window->scaleCancel->hide();
+        else
+            window->back2cursor->hide();
+        window->badInputPrompt->show();
+    } else {
+        window->badInputPrompt->hide();
+        window->scaleConfirm->show();
+        if (window->cursorMode)
+            window->scaleCancel->show();
+        else
+            window->back2cursor->show();
+    }
+}
+
 void calibrate_callback(Fl_Widget *, void *win) {
     MapWindow *window = (MapWindow *)win;
     window->calibrateScale->hide();
@@ -13,9 +34,20 @@ void calibrate_callback(Fl_Widget *, void *win) {
 
 void scaleConfirm_callback(Fl_Widget *, void *win) {
     MapWindow *window = (MapWindow *)win;
-    window->pixelLength = window->cursor->getPixelLength();
-    if (window->pixelLength == -1) window->pixelLength = std::stoi(window->pixelInput->value());
-    window->realLength = std::stoi(window->realInput->value());
+    try {
+        if (window->cursorMode)
+            window->pixelLength = window->cursor->getPixelLength();
+        else
+            window->pixelLength = std::stoi(window->pixelInput->value());
+        window->realLength = std::stoi(window->realInput->value());
+    } catch (...) {
+        badInputTimer_callback(win);
+        return;
+    }
+    if (window->pixelLength <= 0 || window->realLength <= 0) {
+        badInputTimer_callback(win);
+        return;
+    }
     window->mapArea->setScale(window->pixelLength, window->realLength);
     window->scale = "Scale: [ " + std::to_string(window->pixelLength) + " px : " + std::to_string(window->realLength) + " m ]";
     window->cursor->hide();
@@ -44,6 +76,7 @@ void pixelInput_callback(Fl_Widget *, void *win) {
     window->hidePixelInput();
     window->cursor->reset();
     window->cursor->hide();
+    window->cursorMode = false;
     window->scaleConfirm->show();
     window->back2cursor->show();
     window->pixelPrompt->show();
@@ -56,6 +89,7 @@ void back2cursor_callback(Fl_Widget *, void *win) {
     window->back2cursor->hide();
     window->showPixelInput();
     window->cursor->show();
+    window->cursorMode = true;
     window->pixelPrompt->hide();
     window->pixelInput->hide();
 }
@@ -151,7 +185,7 @@ int Cursor::handle(int event) {
     return 0;
 }
 
-MapWindow::MapWindow(int W, int H, const char *L, const char *testcase, const char *suffix) : Fl_Window(W, H, L) {
+MapWindow::MapWindow(int W, int H, const char *L, const char *testcase, const char *suffix) : Fl_Window(W, H, L), badInput(false), cursorMode(true) {
     canvas = new Canvas(0, 0, W, H);
     if (std::string(suffix) == "png")
         backgroundImage = new Fl_PNG_Image(("./assets/" + std::string(testcase) + "." + std::string(suffix)).c_str());
@@ -190,6 +224,9 @@ MapWindow::MapWindow(int W, int H, const char *L, const char *testcase, const ch
     pointUndo->hide();
     areaCancel = new Fl_Button(0, 0, W, H, "Cancel");
     areaCancel->hide();
+    badInputPrompt = new Fl_Box(0, 0, W, H, "Bad input! Please try again!");
+    badInputPrompt->labelcolor(FL_RED);
+    badInputPrompt->hide();
     calibrateScale->callback(calibrate_callback, this);
     scaleConfirm->callback(scaleConfirm_callback, this);
     scaleCancel->callback(scaleCancel_callback, this);
@@ -220,6 +257,7 @@ MapWindow::~MapWindow() {
     delete areaComfirm;
     delete pointUndo;
     delete areaCancel;
+    delete badInputPrompt;
 }
 
 void MapWindow::resize(int X, int Y, int W, int H) {
@@ -266,6 +304,8 @@ void MapWindow::resize(int X, int Y, int W, int H) {
     pointUndo->labelsize(canvas_W / 70);
     areaCancel->resize(W / 2 - canvas_W / 20, canvas_Y + white_H / 2, canvas_W / 10, white_H / 4);
     areaCancel->labelsize(canvas_W / 70);
+    badInputPrompt->resize(W / 2 - canvas_W / 10, canvas_Y + white_H / 2, canvas_W / 5, white_H / 4);
+    badInputPrompt->labelsize(canvas_W / 70);
 }
 
 }  // namespace FLTK_MAP

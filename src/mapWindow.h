@@ -6,6 +6,7 @@
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_PNG_Image.H>
+#include <Fl/Fl_JPEG_Image.H>
 #include <Fl/Fl_Input.H>
 #include <FL/fl_draw.H>
 #include <algorithm>
@@ -72,7 +73,7 @@ class MapWindow : public Fl_Window {
     int realLength;
     std::string scale;
     Canvas *canvas;
-    Fl_PNG_Image *backgroundImage;
+    Fl_RGB_Image *backgroundImage;
     Fl_Box *background;
     Fl_Button *calibrateScale;
     Cursor *cursor;
@@ -97,7 +98,7 @@ class MapWindow : public Fl_Window {
     friend void pointUndo_callback(Fl_Widget *, void *);
 
    public:
-    MapWindow(int W, int H, const char *L = 0, const char *testcase = "testcase1");
+    MapWindow(int W, int H, const char *L = 0, const char *testcase = "testcase1", const char *suffix = "png");
     ~MapWindow();
     void resize(int X, int Y, int W, int H);
     void showScaleButton() {

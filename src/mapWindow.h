@@ -89,6 +89,7 @@ class MapWindow : public Fl_Window {
     MapArea *mapArea;
     Fl_Button *areaComfirm;
     Fl_Button *pointUndo;
+    Fl_Button *areaCancel;
     friend void calibrate_callback(Fl_Widget *, void *);
     friend void scaleConfirm_callback(Fl_Widget *, void *);
     friend void scaleCancel_callback(Fl_Widget *, void *);
@@ -96,6 +97,7 @@ class MapWindow : public Fl_Window {
     friend void back2cursor_callback(Fl_Widget *, void *);
     friend void areaConfirm_callback(Fl_Widget *, void *);
     friend void pointUndo_callback(Fl_Widget *, void *);
+    friend void areaCancel_callback(Fl_Widget *, void *);
 
    public:
     MapWindow(int W, int H, const char *L = 0, const char *testcase = "testcase1", const char *suffix = "png");

@@ -65,6 +65,7 @@ void areaConfirm_callback(Fl_Widget *, void *win) {
     if (window->mapArea->confirm()) {
         window->areaComfirm->hide();
         window->pointUndo->hide();
+        window->areaCancel->show();
     }
 }
 
@@ -72,6 +73,14 @@ void pointUndo_callback(Fl_Widget *, void *win) {
     MapWindow *window = (MapWindow *)win;
     window->mapArea->undo();
     window->redraw();
+}
+
+void areaCancel_callback(Fl_Widget *, void *win) {
+    MapWindow *window = (MapWindow *)win;
+    window->areaComfirm->show();
+    window->pointUndo->show();
+    window->areaCancel->hide();
+    window->mapArea->reset();
 }
 
 void Canvas::draw() {
@@ -144,9 +153,9 @@ int Cursor::handle(int event) {
 
 MapWindow::MapWindow(int W, int H, const char *L, const char *testcase, const char *suffix) : Fl_Window(W, H, L) {
     canvas = new Canvas(0, 0, W, H);
-    if (std::string(suffix)=="png")
+    if (std::string(suffix) == "png")
         backgroundImage = new Fl_PNG_Image(("./assets/" + std::string(testcase) + "." + std::string(suffix)).c_str());
-    else if (std::string(suffix)=="jpeg")
+    else if (std::string(suffix) == "jpeg")
         backgroundImage = new Fl_JPEG_Image(("./assets/" + std::string(testcase) + "." + std::string(suffix)).c_str());
     background = new Fl_Box(0, 0, W, H);
     background->image(backgroundImage->copy(W, H));
@@ -179,6 +188,8 @@ MapWindow::MapWindow(int W, int H, const char *L, const char *testcase, const ch
     areaComfirm->hide();
     pointUndo = new Fl_Button(0, 0, W, H, "Undo");
     pointUndo->hide();
+    areaCancel = new Fl_Button(0, 0, W, H, "Cancel");
+    areaCancel->hide();
     calibrateScale->callback(calibrate_callback, this);
     scaleConfirm->callback(scaleConfirm_callback, this);
     scaleCancel->callback(scaleCancel_callback, this);
@@ -186,6 +197,7 @@ MapWindow::MapWindow(int W, int H, const char *L, const char *testcase, const ch
     back2cursor->callback(back2cursor_callback, this);
     areaComfirm->callback(areaConfirm_callback, this);
     pointUndo->callback(pointUndo_callback, this);
+    areaCancel->callback(areaCancel_callback, this);
 }
 
 MapWindow::~MapWindow() {
@@ -207,6 +219,7 @@ MapWindow::~MapWindow() {
     delete mapArea;
     delete areaComfirm;
     delete pointUndo;
+    delete areaCancel;
 }
 
 void MapWindow::resize(int X, int Y, int W, int H) {
@@ -251,6 +264,8 @@ void MapWindow::resize(int X, int Y, int W, int H) {
     areaComfirm->labelsize(canvas_W / 70);
     pointUndo->resize(W / 2 - canvas_W / 10, canvas_Y + white_H / 2, canvas_W / 10, white_H / 4);
     pointUndo->labelsize(canvas_W / 70);
+    areaCancel->resize(W / 2 - canvas_W / 20, canvas_Y + white_H / 2, canvas_W / 10, white_H / 4);
+    areaCancel->labelsize(canvas_W / 70);
 }
 
 }  // namespace FLTK_MAP

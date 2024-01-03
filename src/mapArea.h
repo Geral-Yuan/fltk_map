@@ -72,6 +72,11 @@ class MapArea : public Fl_Widget {
     void undo() {
         if (!points.empty()) points.pop_back();
     }
+    void reset() {
+        points.clear();
+        pixelArea = realArea = 0;
+        done = false;
+    }
     bool confirm() {
         if (points.size() >= 3) {
             done = true;

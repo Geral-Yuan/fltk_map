@@ -18,9 +18,9 @@ std::string toScientificString(unsigned long long value) {
     x /= 10;
     s = std::to_string(value / x) + ".";
     if (digitCnt <= 6) {
-        s += std::to_string(value % x) + std::string(6 - digitCnt, '0');
+        s += std::to_string(value).substr(1, digitCnt) + std::string(6 - digitCnt, '0');
     } else {
-        s += std::to_string(((value % x) / (x / (int)1e6) + 5) / 10);
+        s += std::to_string((value / (x / (int)1e6) + 5) / 10).substr(1, digitCnt);
     }
     s += "*10^" + std::to_string(digitCnt - 1);
     return s;

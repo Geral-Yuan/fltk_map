@@ -7,6 +7,8 @@
 #include <FL/fl_draw.H>
 #include <vector>
 #include <string>
+#include <algorithm>
+#include <assert.h>
 
 namespace FLTK_MAP {
 
@@ -48,6 +50,7 @@ class MapArea : public Fl_Widget {
     ~MapArea() {
         delete areaLabel;
     }
+    void highlight(int leftX, int rightX, const std::vector<Point> &ps) const;
     void draw() override;
     int handle(int event) override;
     bool inMap(int px, int py) const {
@@ -70,7 +73,7 @@ class MapArea : public Fl_Widget {
         if (!points.empty()) points.pop_back();
     }
     bool confirm() {
-        if (points.size()>=3){
+        if (points.size() >= 3) {
             done = true;
             return true;
         }

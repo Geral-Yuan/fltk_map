@@ -26,18 +26,48 @@ std::string toScientificString(unsigned long long value) {
     return s;
 }
 
+void MapArea::highlight(int leftX, int rightX, const std::vector<Point> &ps) const {
+    int X = x(), Y = y(), W = w(), H = h();
+    int sz = ps.size();
+    int dx = 6;
+    fl_color(FL_YELLOW);
+    fl_line_style(FL_SOLID, 2);
+    for (double lineX = leftX + 0.05; lineX <= rightX; lineX += dx) {
+        std::vector<double> intersectY;
+        double lx = (lineX - X) * imageWidth / W;
+        for (int i = 0; i < sz; ++i) {
+            if ((ps[i].x < lx) != (ps[(i + 1) % sz].x < lx))
+                intersectY.push_back((double)(ps[(i + 1) % sz].y - ps[i].y) / (ps[(i + 1) % sz].x - ps[i].x) * (lx - ps[i].x) + ps[i].y);
+        }
+        int intersectCnt = intersectY.size();
+        assert(intersectCnt % 2 == 0);
+        std::sort(intersectY.begin(), intersectY.end());
+        for (int i = 0; i < intersectCnt; i += 2)
+            fl_line(lineX, Y + intersectY[i] * H / imageHeight, lineX, Y + intersectY[i + 1] * H / imageHeight);
+    }
+    fl_line_style(0);
+}
+
 void MapArea::draw() {
-    int sz = points.size();
-    if (sz) {
+    std::vector<Point> ps(points);
+    if (!done && mouseInside) ps.push_back(currentPoint);
+    int sz = ps.size();
+    if (sz >= 2) {
         int X = x(), Y = y(), W = w(), H = h();
+        int leftmost = X + W, rightmost = X;
         fl_color(FL_CYAN);
         fl_line_style(FL_SOLID, 1 + H / 300);
         fl_begin_loop();
-        for (int i = 0; i < sz; ++i)
-            fl_vertex(X + points[i].x * W / imageWidth, Y + points[i].y * H / imageHeight);
-        if (!done && mouseInside)
-            fl_vertex(X + currentPoint.x * W / imageWidth, Y + currentPoint.y * H / imageHeight);
+        for (int i = 0; i < sz; ++i) {
+            int px = X + ps[i].x * W / imageWidth;
+            int py = Y + ps[i].y * H / imageHeight;
+            fl_vertex(px, py);
+            leftmost = std::min(leftmost, px);
+            rightmost = std::max(rightmost, px);
+        }
         fl_end_loop();
+        fl_line_style(0);
+        if (sz >= 3) highlight(leftmost, rightmost, ps);
     }
     computeArea();
     areaLabel->label(areaString.c_str());

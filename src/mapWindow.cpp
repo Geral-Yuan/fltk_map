@@ -204,7 +204,7 @@ int Cursor::handle(int event) {
     return 0;
 }
 
-MapWindow::MapWindow(int W, int H, const char *L, const char *testcase, const char *suffix) : Fl_Window(W, H, L), badInput(false), invalidPolygon(false), cursorMode(true) {
+MapWindow::MapWindow(int W, int H, const char *L, const char *testcase, const char *suffix) : Fl_Double_Window(W, H, L), badInput(false), invalidPolygon(false), cursorMode(true) {
     canvas = new Canvas(0, 0, W, H);
     if (std::string(suffix) == "png")
         backgroundImage = new Fl_PNG_Image(("./assets/" + std::string(testcase) + "." + std::string(suffix)).c_str());

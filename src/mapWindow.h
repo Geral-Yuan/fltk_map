@@ -2,7 +2,7 @@
 #define MAPWINDOW_H
 
 #include <FL/Fl.H>
-#include <FL/Fl_Window.H>
+#include <Fl/Fl_Double_Window.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_PNG_Image.H>
@@ -68,7 +68,7 @@ class Cursor : public Fl_Widget {
     }
 };
 
-class MapWindow : public Fl_Window {
+class MapWindow : public Fl_Double_Window {
     int pixelLength;
     int realLength;
     std::string scale;
